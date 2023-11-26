@@ -1,0 +1,20 @@
+---
+plugin: google.cloud.gcp_compute
+auth_kind: serviceaccount
+service_account_file: ./sa.json
+hostnames:
+  - name
+zones:
+  - us-west1-c
+projects:
+  - pretix-prod
+filters:
+  - status = RUNNING
+scopes:
+  - "https://www.googleapis.com/auth/cloud-platform"
+  - "https://www.googleapis.com/auth/compute.readonly"
+compose:
+  ansible_host: networkInterfaces[0].accessConfigs[0].natIP
+  ansible_user: sa_116812650600803167570
+groups:
+  pretix: "'pretix' in (labels|list|hostname)"

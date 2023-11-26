@@ -1,0 +1,124 @@
+---
+- name: Setup Pretix User
+  ansible.builtin.user:
+    name: "{{ pretix_user }}"
+    state: present
+    system: true
+    home: "{{ pretix_home_folder }}"
+
+- name: Setup Prerequisites
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ pretix_prerequisites }}"
+
+- name: Setup Directories
+  ansible.builtin.file:
+    path: "{{ pretix_root_dir }}"
+    state: directory
+    owner: "{{ pretix_user }}"
+    group: "{{ pretix_user }}"
+    mode: "0755"
+
+- name: Setup Pretix Configuration
+  ansible.builtin.template:
+    src: pretix.cfg.j2
+    dest: "{{ pretix_root_dir }}/pretix.cfg"
+    owner: "{{ pretix_user }}"
+    group: "{{ pretix_user }}"
+    mode: "0755"
+
+- name: Setup virtualenv
+  become_user: "{{ pretix_user }}"
+  ansible.builtin.shell:
+    cmd: python3 -m venv '{{ pretix_venv }}'
+
+- name: Setup Environment
+  become_user: "{{ pretix_user }}"
+  ansible.builtin.pip:
+    name:
+      - pip
+      - setuptools
+      - wheel
+    state: present
+    virtualenv: "{{ pretix_venv }}"
+
+- name: Setup Pretix Installation
+  become_user: "{{ pretix_user }}"
+  ansible.builtin.pip:
+    name: "{{ item }}"
+    state: present
+    virtualenv: "{{ pretix_venv }}"
+  loop: "{{ pretix_pip_pkgs }}"
+
+- name: Create data directory
+  ansible.builtin.file:
+    path: "{{ pretix_media_dir }}"
+    state: directory
+    owner: "{{ pretix_user }}"
+    group: "{{ pretix_user }}"
+    mode: "0755"
+
+- name: Allow webserver access to the root directory
+  ansible.builtin.file:
+    path: "{{ pretix_home_folder }}"
+    owner: "{{ pretix_user }}"
+    group: "{{ pretix_user }}"
+    mode: "0755"
+
+- name: Run Pretix Migrations
+  become_user: "{{ pretix_user }}"
+  ansible.builtin.shell: "{{ item }}"
+  with_items:
+    - "source '{{ pretix_venv }}/bin/activate'"
+    - "'{{ pretix_venv }}'/bin/python3 -m pretix migrate"
+    - "'{{ pretix_venv }}'/bin/python3 -m pretix rebuild"
+  args:
+    chdir: "{{ pretix_home_folder }}"
+    executable: /bin/bash
+
+- name: Setup Pretix Web Service
+  ansible.builtin.template:
+    src: pretix-web.service.j2
+    dest: /etc/systemd/system/pretix-web.service
+  notify:
+    - Reload systemd
+
+- name: Setup Pretix Worker Service
+  ansible.builtin.template:
+    src: pretix-worker.service.j2
+    dest: /etc/systemd/system/pretix-worker.service
+  notify:
+    - Reload systemd
+
+- name: Setup Pretix Services
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    state: started
+    daemon_reload: true
+    enabled: true
+  loop:
+    - pretix-web
+    - pretix-worker
+
+- name: Setup Cron Job
+  ansible.builtin.cron:
+    name: "pretix_runperiodic"
+    minute: "15,45"
+    job: "export PATH='{{ pretix_venv }}'/bin:$PATH && cd '{{ pretix_home_folder }}' && python -m pretix runperiodic"
+    user: "{{ pretix_user }}"
+
+- name: Deploy Nginx Template
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/sites-available/default
+    mode: "0755"
+  notify: Restart Nginx
+
+- name: Enable Site
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    src: /etc/nginx/sites-available/default
+    force: true
+    state: link
+  notify: Restart Nginx

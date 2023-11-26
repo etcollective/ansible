@@ -1,0 +1,4 @@
+*.json
+*.pub
+id_*
+roles/nginxinc.nginx

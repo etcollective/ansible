@@ -1,0 +1,32 @@
+---
+- name: Deploy Redis
+  hosts: pretix-prod-1
+  become: true
+  roles:
+    - role: geerlingguy.redis
+  vars:
+    redis_unixsocket: ""
+    redis_loglevel: "warning"
+
+- name: Deploy Node.JS
+  hosts: pretix-prod-1
+  become: true
+  roles:
+    - role: geerlingguy.nodejs
+  vars:
+    nodejs_install_npm_user: "root"
+
+- name: Setup Nginx
+  hosts: pretix-prod-1
+  become: true
+  roles:
+    - nginxinc.nginx
+  vars:
+    nginx_install_from: os_repository
+    nginx_setup: upgrade
+
+- name: Deploy Pretix
+  hosts: pretix-prod-1
+  become: true
+  roles:
+    - pretix

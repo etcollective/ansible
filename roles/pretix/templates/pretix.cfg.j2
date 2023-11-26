@@ -1,0 +1,31 @@
+[pretix]
+instance_name={{ instance_name }}
+url={{ instance_url }}
+currency=USD
+datadir={{ pretix_data_dir }}
+trust_x_forwarded_for=on
+trust_x_forwarded_proto=on
+
+[locale]
+timezone=America/Phoenix
+
+[database]
+backend=postgresql
+name={{ db_name }}
+user={{ db_user }}
+password={{ db_password }}
+host={{ db_host }}
+
+[mail]
+from={{ smtp_from }}
+host={{ smtp_host }}
+tls=on
+port=465
+
+[redis]
+location=redis://localhost/0
+sessions=true
+
+[celery]
+backend=redis://127.0.0.1/1
+broker=redis://127.0.0.1/2
