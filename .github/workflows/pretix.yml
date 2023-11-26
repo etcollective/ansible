@@ -1,4 +1,4 @@
-name: Prefix
+name: Playbook - Prefix
 on:
   push:
     branches: ["main"]
@@ -27,6 +27,7 @@ jobs:
           key: ${{secrets.SSH_PRIVATE_KEY}}
           options: |
             --inventory gcp.yml
+        env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
           PRETIX_DB_NAME: ${{ vars.PRETIX_DB_NAME }}
           PRETIX_DB_USER: ${{ vars.PRETIX_DB_USER }}

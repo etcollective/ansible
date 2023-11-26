@@ -7,4 +7,5 @@ collections:
   - name: google.cloud
 roles:
   - geerlingguy.redis
+  - geerlingguy.nodejs
   - nginxinc.nginx
