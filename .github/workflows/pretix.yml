@@ -25,7 +25,10 @@ jobs:
           python-version: "3.11"
 
       - name: Install Python Requirements 📋
-        run: pip install --upgrade -r requirements.txt
+        run: |
+          source /opt/pipx/venvs/ansible-core/bin/activate
+          pip install --upgrade pip
+          pip install --upgrade -r requirements.txt
 
       - name: Execute Ansible Playbook 🚀
         uses: dawidd6/action-ansible-playbook@v2
