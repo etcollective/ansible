@@ -1,0 +1,35 @@
+name: Prefix
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  ansible-playbook:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Turnstyle ✨
+        if: ${{ github.event_name == 'push' }}
+        uses: softprops/turnstyle@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4.1.1
+
+      - name: Execute Ansible Playbook 🚀
+        uses: dawidd6/action-ansible-playbook@v2
+        with:
+          playbook: playbooks/pretix.yml
+          requirements: galaxy-requirements.yml
+          key: ${{secrets.SSH_PRIVATE_KEY}}
+          options: |
+            --inventory gcp.yml
+          env:
+            GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+            PRETIX_DB_NAME: ${{ vars.PRETIX_DB_NAME }}
+            PRETIX_DB_USER: ${{ vars.PRETIX_DB_USER }}
+            PRETIX_DB_HOST: ${{ vars.PRETIX_DB_HOST }}
+            PRETIX_DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
