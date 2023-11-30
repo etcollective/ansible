@@ -6,6 +6,8 @@ collections:
     version: 6.4.0
   - name: google.cloud
 roles:
+  - datadog.dd
+  - googlecloudplatform.google_cloud_ops_agents
   - geerlingguy.redis
   - geerlingguy.nodejs
   - nginxinc.nginx

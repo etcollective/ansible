@@ -1,7 +1,7 @@
 ---
 instance_name: "Explorers' Theatre Collective"
 server_name: pretix.etcollective.org
-instance_url: "https://'{{ server_name }}'"
+instance_url: "https://{{ server_name }}"
 db_name: "{{ lookup('ansible.builtin.env', 'PRETIX_DB_NAME') }}"
 db_user: "{{ lookup('ansible.builtin.env', 'PRETIX_DB_USER') }}"
 db_host: "{{ lookup('ansible.builtin.env', 'PRETIX_DB_HOST') }}"

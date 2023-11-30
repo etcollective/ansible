@@ -1,0 +1,28 @@
+---
+- name: Get Token
+  ansible.builtin.set_fact:
+    tunnel_token: "{{ lookup('ansible.builtin.env', 'CF_TUNNEL_TOKEN') }}"
+
+- name: Add GPG Key
+  ansible.builtin.apt_key:
+    url: https://pkg.cloudflare.com/cloudflare-main.gpg
+    keyring: /usr/share/keyrings/cloudflare-main.gpg
+    state: present
+
+- name: Add repo to apt sources list
+  ansible.builtin.apt_repository:
+    repo: deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared {{ ansible_distribution_release }} main
+    state: present
+
+- name: Install / Update Cloudflared
+  ansible.builtin.apt:
+    update_cache: true
+    name: cloudflared
+    state: latest
+
+- name: Start the tunnel
+  ansible.builtin.systemd:
+    name: cloudflared
+    state: started
+    enabled: true
+    masked: no

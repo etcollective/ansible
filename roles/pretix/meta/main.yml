@@ -1,0 +1,16 @@
+---
+allow_duplicates: true
+dependencies:
+  - role: geerlingguy.redis
+    vars:
+      redis_unixsocket: ""
+      redis_loglevel: "warning"
+  - role: geerlingguy.nodejs
+    vars:
+      nodejs_install_npm_user: "root"
+      nodejs_version: "18.x"
+  - role: nginxinc.nginx
+    vars:
+      nginx_install_from: nginx_repository
+      nginx_setup: upgrade
+      nginx_static_modules: [http_ssl_module, http_stub_status_module]

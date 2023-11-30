@@ -66,16 +66,16 @@
     group: "{{ pretix_user }}"
     mode: "0755"
 
-- name: Run Pretix Migrations
-  become_user: "{{ pretix_user }}"
-  ansible.builtin.shell: "{{ item }}"
-  with_items:
-    - "source '{{ pretix_venv }}/bin/activate'"
-    - "'{{ pretix_venv }}'/bin/python3 -m pretix migrate"
-    - "'{{ pretix_venv }}'/bin/python3 -m pretix rebuild"
-  args:
-    chdir: "{{ pretix_home_folder }}"
-    executable: /bin/bash
+# - name: Run Pretix Migrations
+#   become_user: "{{ pretix_user }}"
+#   ansible.builtin.shell: "{{ item }}"
+#   with_items:
+#     - "source '{{ pretix_venv }}/bin/activate'"
+#     - "'{{ pretix_venv }}'/bin/python3 -m pretix migrate"
+#     - "'{{ pretix_venv }}'/bin/python3 -m pretix rebuild"
+#   args:
+#     chdir: "{{ pretix_home_folder }}"
+#     executable: /bin/bash
 
 - name: Setup Pretix Web Service
   ansible.builtin.template:
@@ -111,14 +111,9 @@
 - name: Deploy Nginx Template
   ansible.builtin.template:
     src: nginx.conf.j2
-    dest: /etc/nginx/sites-available/default
+    dest: /etc/nginx/conf.d/pretix.conf
     mode: "0755"
   notify: Restart Nginx
 
-- name: Enable Site
-  ansible.builtin.file:
-    path: /etc/nginx/sites-enabled/default
-    src: /etc/nginx/sites-available/default
-    force: true
-    state: link
-  notify: Restart Nginx
+- name: Setup Cloudflared
+  ansible.builtin.include_tasks: cloudflared_tunnel.yml
