@@ -3,6 +3,7 @@ instance_name={{ instance_name }}
 url={{ instance_url }}
 currency=USD
 datadir={{ pretix_data_dir }}
+obligatory_2fa=True
 trust_x_forwarded_for=on
 trust_x_forwarded_proto=on
 
@@ -15,12 +16,21 @@ name={{ db_name }}
 user={{ db_user }}
 password={{ db_password }}
 host={{ db_host }}
+sslmode=verify-ca
+sslrootcert=/etc/pretix/server-ca.pem
+sslcert=/etc/pretix/client-cert.pem
+sslkey=/etc/pretix/client-key.pem
 
 [mail]
 from={{ smtp_from }}
 host={{ smtp_host }}
 tls=on
 port=465
+
+[metrics]
+enabled=true
+user=datadog-integration
+passphrase={{ lookup('ansible.builtin.env', 'DD_API_KEY') }}
 
 [redis]
 location=redis://localhost/0

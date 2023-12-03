@@ -1,4 +1,6 @@
 ---
+pretix_version: 2023.10.0
+
 pretix_user: pretix
 pretix_home_folder: /var/pretix
 pretix_venv: "{{ pretix_home_folder }}/venv"
@@ -7,8 +9,11 @@ pretix_data_dir: /var/pretix/data
 pretix_media_dir: "{{ pretix_data_dir }}/media/"
 
 pretix_pip_pkgs:
-  - pretix
+  # General
+  - pretix=={{ pretix_version }}
   - gunicorn
+  # Plugins
+  - pretix-passbook
 
 pretix_prerequisites:
   - git

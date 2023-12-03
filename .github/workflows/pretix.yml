@@ -26,7 +26,6 @@ jobs:
 
       - name: Install Python Requirements 📋
         run: |
-          source /opt/pipx/venvs/ansible-core/bin/activate
           pip install --upgrade pip
           pip install --upgrade -r requirements.txt
 

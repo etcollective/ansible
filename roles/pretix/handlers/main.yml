@@ -1,9 +1,26 @@
 ---
 - name: Reload systemd
   ansible.builtin.systemd:
-    daemon_reload: yes
+    daemon_reload: true
 
-- name: Restart Nginx
-  ansible.builtin.systemd:
-    name: nginx
+- name: Run Pretix Migrations
+  become_user: "{{ pretix_user }}"
+  ansible.builtin.shell: "{{ item }}"
+  with_items:
+    - "source '{{ pretix_venv }}/bin/activate'"
+    - "'{{ pretix_venv }}'/bin/python3 -m pretix migrate"
+    - "'{{ pretix_venv }}'/bin/python3 -m pretix rebuild"
+  args:
+    chdir: "{{ pretix_home_folder }}"
+    executable: /bin/bash
+  listen: migrations
+  notify: restart_services
+
+- name: Setup Pretix Services
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
     state: restarted
+  with_items:
+    - pretix-web
+    - pretix-worker
+  listen: restart_services

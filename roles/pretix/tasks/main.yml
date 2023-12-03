@@ -27,11 +27,8 @@
     owner: "{{ pretix_user }}"
     group: "{{ pretix_user }}"
     mode: "0755"
-
-- name: Setup virtualenv
-  become_user: "{{ pretix_user }}"
-  ansible.builtin.shell:
-    cmd: python3 -m venv '{{ pretix_venv }}'
+  notify:
+    - migrations
 
 - name: Setup Environment
   become_user: "{{ pretix_user }}"
@@ -40,16 +37,21 @@
       - pip
       - setuptools
       - wheel
-    state: present
+    state: latest
     virtualenv: "{{ pretix_venv }}"
+  notify:
+    - migrations
 
 - name: Setup Pretix Installation
   become_user: "{{ pretix_user }}"
   ansible.builtin.pip:
     name: "{{ item }}"
-    state: present
+    state: latest
     virtualenv: "{{ pretix_venv }}"
   loop: "{{ pretix_pip_pkgs }}"
+  notify:
+    - migrations
+    - restart_services
 
 - name: Create data directory
   ansible.builtin.file:
@@ -66,23 +68,13 @@
     group: "{{ pretix_user }}"
     mode: "0755"
 
-# - name: Run Pretix Migrations
-#   become_user: "{{ pretix_user }}"
-#   ansible.builtin.shell: "{{ item }}"
-#   with_items:
-#     - "source '{{ pretix_venv }}/bin/activate'"
-#     - "'{{ pretix_venv }}'/bin/python3 -m pretix migrate"
-#     - "'{{ pretix_venv }}'/bin/python3 -m pretix rebuild"
-#   args:
-#     chdir: "{{ pretix_home_folder }}"
-#     executable: /bin/bash
-
 - name: Setup Pretix Web Service
   ansible.builtin.template:
     src: pretix-web.service.j2
     dest: /etc/systemd/system/pretix-web.service
   notify:
     - Reload systemd
+    - restart_services
 
 - name: Setup Pretix Worker Service
   ansible.builtin.template:
@@ -90,6 +82,7 @@
     dest: /etc/systemd/system/pretix-worker.service
   notify:
     - Reload systemd
+    - restart_services
 
 - name: Setup Pretix Services
   ansible.builtin.systemd_service:
@@ -108,12 +101,8 @@
     job: "export PATH='{{ pretix_venv }}'/bin:$PATH && cd '{{ pretix_home_folder }}' && python -m pretix runperiodic"
     user: "{{ pretix_user }}"
 
-- name: Deploy Nginx Template
-  ansible.builtin.template:
-    src: nginx.conf.j2
-    dest: /etc/nginx/conf.d/pretix.conf
-    mode: "0755"
-  notify: Restart Nginx
+- name: Flush Handlers
+  ansible.builtin.meta: flush_handlers
 
 - name: Setup Cloudflared
   ansible.builtin.include_tasks: cloudflared_tunnel.yml
